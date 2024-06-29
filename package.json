@@ -1,0 +1,15 @@
+{
+  "name": "my-swagger-project",
+  "version": "1.0.0",
+  "description": "A project to demonstrate Swagger UI customization with a dark theme",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "Nama Anda",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "swagger-ui-dist": "^4.15.5"
+  }
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swagger UI - Dark Theme</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+  <style>
+    body {
+      background-color: #2e2e2e;
+      color: #ffffff;
+    }
+    .swagger-ui .topbar {
+      background-color: #1e1e1e;
+    }
+    .swagger-ui .info {
+      background-color: #3e3e3e;
+      border: 1px solid #4e4e4e;
+    }
+    .swagger-ui .opblock {
+      background-color: #3e3e3e;
+      border: 1px solid #4e4e4e;
+    }
+    .swagger-ui .opblock-summary {
+      background-color: #4e4e4e;
+    }
+    .swagger-ui .opblock-summary-method {
+      color: #ffffff;
+    }
+    .swagger-ui .opblock-summary-path {
+      color: #ffffff;
+    }
+    .swagger-ui .opblock-summary-description {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "/swagger.json",
+        dom_id: '#swagger-ui',
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        docExpansion: "none",
+        defaultModelsExpandDepth: -1,
+        deepLinking: true,
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+      });
+    };
+  </script>
+</body>
+</html>
