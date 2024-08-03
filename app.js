@@ -1,43 +1,33 @@
-const axios = require('axios');
-const cheerio = require('cheerio');
+const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 
-async function scrapeKuronimePage(page = 1) {
+async function sKuronime(page = 1) {
+  let driver = await new Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(new chrome.Options().headless())
+    .build();
+
   try {
-    // Mengatur URL dan headers
-    const url = `https://kuronime.me/anime/page/${page}/?title&status&type&order=title`;
-    const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    };
+    await driver.get(`https://kuronime.me/anime/page/${page}/?title&status&type&order=title`);
+    await driver.wait(until.elementLocated(By.css('.listupd .bs')), 10000);
 
-    // Melakukan request ke halaman
-    const response = await axios.get(url, { headers });
-    const html = response.data;
-
-    // Parsing HTML menggunakan Cheerio
-    const $ = cheerio.load(html);
-
-    // Scraping data
-    const animeList = [];
-    $('.listupd .bs').each((index, element) => {
-      const title = $(element).find('.tt h4').text().trim();
-      const url = $(element).find('a').attr('href');
-      const imageUrl = $(element).find('.limit img').attr('src') || $(element).find('.limit img').attr('data-src');
-      const type = $(element).find('.bt span').text().trim();
-      const rating = parseFloat($(element).find('.rating i').text().trim());
-
-      if (title) {
-        animeList.push({ title, url, imageUrl, type, rating });
-      }
+    return await driver.executeScript(() => {
+      return Array.from(document.querySelectorAll('.listupd .bs')).map(el => {
+        const title = el.querySelector('.tt h4')?.textContent.trim();
+        if (!title) return null;
+        return {
+          title,
+          url: el.querySelector('a')?.href,
+          imageUrl: el.querySelector('.limit img')?.src || el.querySelector('.limit img')?.dataset.src,
+          type: el.querySelector('.bt span')?.textContent.trim(),
+          rating: parseFloat(el.querySelector('.rating i')?.textContent.trim())
+        };
+      }).filter(Boolean);
     });
-
-    return animeList;
-  } catch (error) {
-    console.error('Terjadi kesalahan saat melakukan scraping:', error);
-    return [];
+  } finally {
+    await driver.quit();
   }
 }
 
-// Contoh penggunaan
-scrapeKuronimePage(2).then(result => {
-  console.log(result);
-});
+// Cara penggunaan
+sKuronime(2).then(console.log).catch(console.error);
