@@ -1,38 +1,34 @@
-const { chromium } = require('playwright');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 async function scrapeKuronimePage(page = 1) {
   try {
-    // Membuka browser
-    const browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    });
-    const newPage = await context.newPage();
+    // Mengatur URL dan headers
+    const url = `https://kuronime.me/anime/page/${page}/?title&status&type&order=title`;
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    };
 
-    // Navigasi ke halaman
-    await newPage.goto(`https://kuronime.me/anime/page/${page}/?title&status&type&order=title`, {
-      waitUntil: 'networkidle'
-    });
+    // Melakukan request ke halaman
+    const response = await axios.get(url, { headers });
+    const html = response.data;
+
+    // Parsing HTML menggunakan Cheerio
+    const $ = cheerio.load(html);
 
     // Scraping data
-    const animeList = await newPage.evaluate(() => {
-      const results = [];
-      document.querySelectorAll('.listupd .bs').forEach((element) => {
-        const title = element.querySelector('.tt h4')?.textContent.trim();
-        const url = element.querySelector('a')?.href;
-        const imageUrl = element.querySelector('.limit img')?.src || element.querySelector('.limit img')?.dataset.src;
-        const type = element.querySelector('.bt span')?.textContent.trim();
-        const rating = parseFloat(element.querySelector('.rating i')?.textContent.trim());
+    const animeList = [];
+    $('.listupd .bs').each((index, element) => {
+      const title = $(element).find('.tt h4').text().trim();
+      const url = $(element).find('a').attr('href');
+      const imageUrl = $(element).find('.limit img').attr('src') || $(element).find('.limit img').attr('data-src');
+      const type = $(element).find('.bt span').text().trim();
+      const rating = parseFloat($(element).find('.rating i').text().trim());
 
-        if (title) {
-          results.push({ title, url, imageUrl, type, rating });
-        }
-      });
-      return results;
+      if (title) {
+        animeList.push({ title, url, imageUrl, type, rating });
+      }
     });
-
-    // Menutup browser
-    await browser.close();
 
     return animeList;
   } catch (error) {
