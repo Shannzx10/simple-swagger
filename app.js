@@ -1,33 +1,41 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
+const { chromium } = require('playwright');
 
-async function sKuronime(page = 1) {
-  let driver = await new Builder()
-    .forBrowser('chrome')
-    .setChromeOptions(new chrome.Options().headless())
-    .build();
-
+async function scrapeYtmp3s(youtubeUrl) {
+  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const page = await browser.newPage();
+  
   try {
-    await driver.get(`https://kuronime.me/anime/page/${page}/?title&status&type&order=title`);
-    await driver.wait(until.elementLocated(By.css('.listupd .bs')), 10000);
+    // Buka halaman ytmp3s.nu
+    await page.goto('https://ytmp3s.nu/');
 
-    return await driver.executeScript(() => {
-      return Array.from(document.querySelectorAll('.listupd .bs')).map(el => {
-        const title = el.querySelector('.tt h4')?.textContent.trim();
-        if (!title) return null;
-        return {
-          title,
-          url: el.querySelector('a')?.href,
-          imageUrl: el.querySelector('.limit img')?.src || el.querySelector('.limit img')?.dataset.src,
-          type: el.querySelector('.bt span')?.textContent.trim(),
-          rating: parseFloat(el.querySelector('.rating i')?.textContent.trim())
-        };
-      }).filter(Boolean);
-    });
+    // Masukkan URL YouTube ke dalam input
+    await page.fill('#url', youtubeUrl);
+
+    // Klik tombol submit
+    await page.click('input[type="submit"]');
+
+    // Tunggu hingga hasil konversi muncul (maksimal 15 detik)
+    await page.waitForSelector('a[href^="https://mmuu.ummn.nu/api/v1/download"]', { timeout: 15000 });
+
+    // Ambil URL hasil konversi
+    const downloadUrl = await page.$eval('a[href^="https://mmuu.ummn.nu/api/v1/download"]', el => el.href);
+
+    return downloadUrl;
+  } catch (error) {
+    console.error('Terjadi kesalahan:', error);
+    return null;
   } finally {
-    await driver.quit();
+    await browser.close();
   }
 }
 
-// Cara penggunaan
-sKuronime(2).then(console.log).catch(console.error);
+// Contoh penggunaan
+(async () => {
+  const youtubeUrl = 'https://www.youtube.com/watch?v=g7pMevhVeSM';
+  const result = await scrapeYtmp3s(youtubeUrl);
+  if (result) {
+    console.log('URL hasil konversi:', result);
+  } else {
+    console.log('Gagal mendapatkan URL hasil konversi.');
+  }
+})();
